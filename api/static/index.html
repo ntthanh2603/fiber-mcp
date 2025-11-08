@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detection - Real-time URL Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .result.safe {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+        }
+
+        .result.phishing {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-icon {
+            font-size: 3em;
+            margin-right: 15px;
+        }
+
+        .result-title {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .result.safe .result-title {
+            color: #155724;
+        }
+
+        .result.phishing .result-title {
+            color: #721c24;
+        }
+
+        .result-details {
+            margin-top: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .detail-value {
+            color: #333;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+
+        .risk-low {
+            background: #28a745;
+            color: white;
+        }
+
+        .risk-medium {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .risk-high {
+            background: #dc3545;
+            color: white;
+        }
+
+        .features {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+
+        .features h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .feature-item {
+            padding: 5px 0;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .api-link {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .api-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .api-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Phishing Detector</h1>
+        <p class="subtitle">Analyze URLs for phishing threats using AI</p>
+
+        <div class="input-group">
+            <label for="urlInput">Enter URL to Check:</label>
+            <input
+                type="text"
+                id="urlInput"
+                placeholder="https://example.com"
+                value="http://secure-login-verify.suspicious-domain.com/account/update?session=abc123"
+            >
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="analyzeURL()">🔍 Analyze URL</button>
+            <button class="btn-secondary" onclick="analyzeEnsemble()">🎯 Ensemble Analysis</button>
+            <button class="btn-secondary" onclick="clearResults()">🗑️ Clear</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing URL...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-header">
+                <div class="result-icon" id="resultIcon"></div>
+                <div>
+                    <div class="result-title" id="resultTitle"></div>
+                    <div id="resultUrl" style="color: #666; margin-top: 5px; word-break: break-all;"></div>
+                </div>
+            </div>
+
+            <div class="result-details" id="resultDetails"></div>
+
+            <div class="features" id="features" style="display: none;">
+                <h3>Top Risk Factors:</h3>
+                <div id="featuresList"></div>
+            </div>
+        </div>
+
+        <div class="api-link">
+            <a href="/docs" target="_blank">📚 API Documentation</a>
+        </div>
+
+        <div class="footer">
+            Powered by XGBoost, Random Forest & Logistic Regression<br>
+            98.65% Accuracy
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        async function analyzeURL() {
+            const url = document.getElementById('urlInput').value.trim();
+
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+                displayResults(data, false);
+            } catch (error) {
+                hideLoading();
+                alert('Error analyzing URL. Make sure the API is running.');
+                console.error(error);
+            }
+        }
+
+        async function analyzeEnsemble() {
+            const url = document.getElementById('urlInput').value.trim();
+
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/predict/ensemble`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+                displayResults(data, true);
+            } catch (error) {
+                hideLoading();
+                alert('Error analyzing URL. Make sure the API is running.');
+                console.error(error);
+            }
+        }
+
+        function displayResults(data, isEnsemble) {
+            hideLoading();
+
+            const result = document.getElementById('result');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultUrl = document.getElementById('resultUrl');
+            const resultDetails = document.getElementById('resultDetails');
+            const features = document.getElementById('features');
+
+            // Determine if phishing
+            const isPhishing = isEnsemble ? data.is_phishing : data.prediction.is_phishing;
+            const confidence = isEnsemble ? data.confidence : data.prediction.confidence;
+            const riskLevel = isEnsemble ? data.risk_level : data.prediction.risk_level;
+
+            // Set result class
+            result.className = 'result ' + (isPhishing ? 'phishing' : 'safe');
+            result.style.display = 'block';
+
+            // Set icon and title
+            if (isPhishing) {
+                resultIcon.textContent = '⚠️';
+                resultTitle.textContent = 'Phishing Detected!';
+            } else {
+                resultIcon.textContent = '✅';
+                resultTitle.textContent = 'URL Appears Safe';
+            }
+
+            resultUrl.textContent = data.url;
+
+            // Create details
+            let detailsHTML = '';
+
+            if (isEnsemble) {
+                detailsHTML += createDetailRow('Confidence', `${(confidence * 100).toFixed(1)}%`);
+                detailsHTML += createDetailRow('Risk Level', `<span class="risk-badge risk-${riskLevel.toLowerCase()}">${riskLevel}</span>`);
+                detailsHTML += createDetailRow('Analysis Type', 'Ensemble (3 models)');
+
+                // Model votes
+                const predictions = data.individual_predictions;
+                let modelsHTML = '<div style="margin-top: 10px;">';
+                for (const [model, pred] of Object.entries(predictions)) {
+                    const vote = pred.prediction === 1 ? '🔴 Phishing' : '🟢 Safe';
+                    modelsHTML += `<div class="feature-item">${model}: ${vote} (${(pred.phishing_probability * 100).toFixed(1)}%)</div>`;
+                }
+                modelsHTML += '</div>';
+                detailsHTML += createDetailRow('Model Votes', modelsHTML);
+
+            } else {
+                detailsHTML += createDetailRow('Confidence', `${(confidence * 100).toFixed(1)}%`);
+                detailsHTML += createDetailRow('Risk Level', `<span class="risk-badge risk-${riskLevel.toLowerCase()}">${riskLevel}</span>`);
+                detailsHTML += createDetailRow('Phishing Probability', `${(data.prediction.phishing_probability * 100).toFixed(1)}%`);
+                detailsHTML += createDetailRow('Legitimate Probability', `${(data.prediction.legitimate_probability * 100).toFixed(1)}%`);
+
+                // Confidence bar
+                detailsHTML += `
+                    <div class="detail-row">
+                        <div class="detail-label">Confidence Level</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${confidence * 100}%">
+                            ${(confidence * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                `;
+
+                // Top features
+                if (data.features && data.features.top_10_important_features) {
+                    features.style.display = 'block';
+                    const featuresList = document.getElementById('featuresList');
+                    featuresList.innerHTML = '';
+
+                    data.features.top_10_important_features.slice(0, 5).forEach(feature => {
+                        featuresList.innerHTML += `
+                            <div class="feature-item">
+                                <strong>${feature.name}:</strong> ${feature.value}
+                                <span style="color: #999;">(${(feature.importance * 100).toFixed(1)}% importance)</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            resultDetails.innerHTML = detailsHTML;
+        }
+
+        function createDetailRow(label, value) {
+            return `
+                <div class="detail-row">
+                    <div class="detail-label">${label}:</div>
+                    <div class="detail-value">${value}</div>
+                </div>
+            `;
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function clearResults() {
+            document.getElementById('urlInput').value = '';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('features').style.display = 'none';
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeURL();
+            }
+        });
+    </script>
+</body>
+</html>
