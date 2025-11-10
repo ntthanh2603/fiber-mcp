@@ -170,7 +170,7 @@ uvicorn main:app --reload
 ```
 
 **Access:**
-- Web Interface: http://localhost:8000
+- API Root: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 - Health Check: http://localhost:8000/health
 
@@ -182,11 +182,11 @@ uvicorn main:app --reload
 - `/predict/batch` - Analyze up to 100 URLs
 - `/analyze` - Detailed feature analysis
 
-✅ **Web Interface:**
-- Beautiful, responsive UI
-- Real-time URL scanning
-- Visual risk indicators
-- Confidence scores
+✅ **Ready for Frontend:**
+- CORS enabled for web integration
+- RESTful JSON API
+- Comprehensive error handling
+- Real-time responses
 
 ✅ **Performance:**
 - <100ms response time

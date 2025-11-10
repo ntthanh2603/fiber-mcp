@@ -5,8 +5,6 @@ FastAPI application for real-time phishing website detection
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, HttpUrl, Field
 from typing import List, Optional, Dict
 import joblib
@@ -38,9 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Load models and feature extractor
 MODEL_DIR = Path("../models")
@@ -173,26 +168,22 @@ def predict_with_model(url: str, html_content: Optional[str], model, model_name:
 
 
 # API Endpoints
-@app.get("/", response_class=HTMLResponse, tags=["General"])
+@app.get("/", tags=["General"])
 async def root():
-    """Root endpoint - Serves web interface"""
-    try:
-        with open("static/index.html", "r") as f:
-            return f.read()
-    except FileNotFoundError:
-        return HTMLResponse(content="""
-            <html>
-                <body>
-                    <h1>Phishing Detection API</h1>
-                    <p>Version: 1.0.0</p>
-                    <ul>
-                        <li><a href="/docs">API Documentation</a></li>
-                        <li><a href="/health">Health Check</a></li>
-                        <li><a href="/models">Models Info</a></li>
-                    </ul>
-                </body>
-            </html>
-        """, status_code=200)
+    """Root endpoint"""
+    return {
+        "message": "Phishing Detection API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "endpoints": {
+            "health": "/health",
+            "models": "/models",
+            "predict": "/predict",
+            "ensemble": "/predict/ensemble",
+            "batch": "/predict/batch",
+            "analyze": "/analyze"
+        }
+    }
 
 
 @app.get("/health", response_model=HealthResponse, tags=["General"])

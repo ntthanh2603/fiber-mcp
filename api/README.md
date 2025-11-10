@@ -12,6 +12,7 @@ A production-ready REST API for real-time phishing website detection using machi
 - **Auto-generated Documentation**: Interactive Swagger UI
 - **Docker Support**: Easy deployment with Docker and Docker Compose
 - **High Performance**: FastAPI with async support
+- **CORS Enabled**: Ready for frontend integration
 
 ## Quick Start
 
